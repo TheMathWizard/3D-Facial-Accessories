@@ -40,6 +40,9 @@ class Face:
 		self.vert_indices = vertices
 
 
+# verts = dict {vert_id : Vertex object}
+# edges = dict {'vert_id1:vert_id2' : Edge object}
+
 class Mesh:
 	def __init__(self, mesh_name):
 		self.verts = {}
@@ -115,8 +118,31 @@ class Mesh:
 		print(len(self.verts), len(self.faces), len(self.edges))
 
 
+def get_closest_vert(vertID, sourceMeshVerts, targetMeshVerts):
+	dist = -1
+	border_verts = sourceMeshVerts
+	border_verts_head = targetMeshVerts
+
+	c1 = border_verts_head[next(iter(border_verts_head))]
+	match_index = 0
+	for verth in border_verts_head:
+		ab_vec = border_verts_head[verth].getLocation() - border_verts[vertID].getLocation()
+		if(dist==-1 or np.linalg.norm(ab_vec) < dist):
+			dist = np.linalg.norm(ab_vec)
+			c1 = border_verts_head[verth]
+			match_index = verth
+	return match_index
+
+def dist_btw_verts(v1, v2):
+	return np.linalg.norm(v1.getLocation() - v2.getLocation())
+
+def create_face(mesh, face, edge_list):
+	mesh.faces[len(mesh.faces)] = face
+	for edge in edge_list:
+		edge.add_face(face)
+
 def driver():
-	face = Mesh('femface.ply')
+	face = Mesh('baseFace.ply')
 	head = Mesh('head_border.ply')
 
 	border_edges = {}
@@ -127,12 +153,6 @@ def driver():
 	border_edges_head = {}
 	border_verts_head = {}
 	#border_gradient_head = {}
-	# figure the headLoop
-	#for edge in backHead.edges:
-	#	if(backHead.edges[edge].is_boundary()):
-	#		border_edges_head[edge] = backHead.edges[edge]
-	#print(len(border_edges_head))
-	#return
 
 	# find top vertex head
 	max_val = 0
@@ -205,54 +225,232 @@ def driver():
 
 	currentVerts = len(face.verts)
 
+
+	mid_verts = []
 	# extend face new vertices
+	first = True
+	path_chosen_edge_name = ''
+	last_vert_edge_name = ''
+	#Associate each midset with an edge
 	for vert in border_verts:
+		# find closest point on border_verts_head & creates the edge
 
-		# find closest point on border_verts_head
-		dist = -1
-		c1 = border_verts_head[next(iter(border_verts_head))]
-		for verth in border_verts_head:
-			ab_vec = border_verts_head[verth].getLocation() - border_verts[vert].getLocation()
-			if(dist==-1 or np.linalg.norm(ab_vec) < dist):
-				dist = np.linalg.norm(ab_vec)
-				c1 = border_verts_head[verth]
-		target_vector = c1.getLocation() - border_verts[vert].getLocation()
-		target_vector *= 1
-
-
+		match_index = get_closest_vert(vert, border_verts, border_verts_head)
+		target_vector = border_verts_head[match_index].getLocation() - border_verts[vert].getLocation()
 
 		face.props = np.append(face.verts[vert].getLocation() + target_vector, np.array((255, 255, 255, 255), dtype='float64')).tolist()
 		new_id = len(face.verts)
 		face.verts[new_id] = Vertex(new_id, face.props)
 		face.edges[str(new_id)+':'+str(vert)] = Edge(str(new_id)+':'+str(vert), face.verts)
 
+		#filling up the midset with the intermediate vertices
+		if(len(mid_verts) == 0):
+			# Create New MidSet
+			mid_verts.append({new_id : [match_index]})
+		else:
+			mid_set = mid_verts[len(mid_verts)-1]
+			for key in mid_set:
+				mid_set = mid_set[key]
+			init_vertex = border_verts_head[mid_set[0]] #last match_index
+
+			if(first): #figure out the direction of traversal in the first iteration
+				count = 0
+				#finding the first direction of traversal
+				for vert_edge in init_vertex.edges:
+					if(vert_edge.is_boundary()):
+						path_chosen_edge_name = vert_edge.name
+
+				while (init_vertex.index != match_index and count < 10):
+					count+=1
+					for vert_edge in init_vertex.edges:
+						if(vert_edge.is_boundary() and vert_edge.name!=last_vert_edge_name):
+							last_vert_edge_name = vert_edge.name
+							init_vertex = vert_edge.retrieve_other_vert(init_vertex, head.verts)
+							mid_set.append(init_vertex.index)
+							break
+				
+				if(count==10):
+					last_vert_edge_name = path_chosen_edge_name
+					for vert_edge in init_vertex.edges:
+						if(vert_edge.is_boundary() and vert_edge.name==last_vert_edge_name):
+							last_vert_edge_name = vert_edge.name
+							init_vertex = vert_edge.retrieve_other_vert(init_vertex, head.verts)
+							mid_set.append(init_vertex.index)
+							break
+				first = False
+			else:
+				while (init_vertex.index != match_index):
+					for vert_edge in init_vertex.edges:
+						if(vert_edge.is_boundary() and vert_edge.name!=last_vert_edge_name):
+							last_vert_edge_name = vert_edge.name
+							init_vertex = vert_edge.retrieve_other_vert(init_vertex, head.verts)
+							mid_set.append(init_vertex.index)
+							break
+
+			#Create New MidSet
+			mid_verts.append({new_id : [match_index]}) 
+
+
+	#Close up the last MidSet
+	diction = mid_verts[0]
+	for key in diction:
+		match = diction[key]
+	match_index = match[0]
+	mid_set = mid_verts[len(mid_verts)-1]
+	for key in mid_set:
+		mid_set = mid_set[key]
+	init_vertex = border_verts_head[mid_set[0]]
+	while (init_vertex.index != match_index):
+		for vert_edge in init_vertex.edges:
+			if(vert_edge.is_boundary() and vert_edge.name!=last_vert_edge_name):
+				last_vert_edge_name = vert_edge.name
+				init_vertex = vert_edge.retrieve_other_vert(init_vertex, head.verts)
+				mid_set.append(init_vertex.index)
+				break
+
+	#print(mid_verts)
+	#return
+
 	# Create Faces
-	for edge in border_edges:
-		v1 = face.verts[border_edges[edge].v1_idx]
-		for vert_edge in v1.edges:
-			if(vert_edge.retrieve_other_vert(v1, face.verts).index >= currentVerts):
-				e1 = vert_edge
-				v_next1 = vert_edge.retrieve_other_vert(v1, face.verts)
 
-		v2 = face.verts[border_edges[edge].v2_idx]
-		for vert_edge in v2.edges:
-			if(vert_edge.retrieve_other_vert(v2, face.verts).index >= currentVerts):
-				e2 = vert_edge
-				v_next2 = vert_edge.retrieve_other_vert(v2, face.verts)
+	for j, mid_set in enumerate(mid_verts):
+		#print(j)
+		new_id = -1
+		for key in mid_set:
+			new_id = key
+			mid_set = mid_set[key]
 
-		new_edge_name = str(v_next1.index)+':'+str(v_next2.index)
-		face.edges[new_edge_name] = Edge(new_edge_name, face.verts)
+		#first_vert_id = mid_set[0]
+		#last_vert_id = mid_set[len(mid_set)-1]
 
-		e3 = border_edges[edge]
-		e4 = face.edges[new_edge_name]
+		if(len(mid_set)==1):
+			#print('triangle')
+			root_vert = face.verts[new_id]
+			found = False
+			for edge in root_vert.edges:
+				if(found):
+					break
+				v = edge.retrieve_other_vert(root_vert, face.verts)
+				for secnd_edge in v.edges:
+					if(found):
+						break
+					v2 = secnd_edge.retrieve_other_vert(v, face.verts)
+					for thrd_edge in v2.edges:
+						v3 = thrd_edge.retrieve_other_vert(v2, face.verts)
+						#if(i>138 and i<143):
+						#	print(dist_btw_verts(v3, last_mid_vert_head))
+						if(dist_btw_verts(v3, root_vert)<0.0000000001):
+							face.edges[str(v3.index)+':'+str(root_vert.index)] = Edge(str(v3.index)+':'+str(root_vert.index), face.verts)
+							e4 = face.edges[str(v3.index)+':'+str(root_vert.index)]
+							new_face = Face(len(face.faces), (root_vert.index, v.index, v2.index, v3.index))
+							create_face(face, new_face, [edge, secnd_edge, thrd_edge, e4]) #adds new_face to face mesh and attaches the face to each edge
+							found = True
+							#print('triangle')
+							break
 
-		new_face = Face(len(face.faces), (v1.index, v2.index, v_next2.index, v_next1.index))
-		face.faces[len(face.faces)] = new_face
+		if(len(mid_set)==2):
+			#print('quad')
+			root_vert = face.verts[new_id]
+			last_mid_vert_head = border_verts_head[mid_set[1]]
+			found = False
+			for edge in root_vert.edges:
+				if(found):
+					break
+				v = edge.retrieve_other_vert(root_vert, face.verts)
+				for secnd_edge in v.edges:
+					if(found):
+						break
+					v2 = secnd_edge.retrieve_other_vert(v, face.verts)
+					for thrd_edge in v2.edges:
+						v3 = thrd_edge.retrieve_other_vert(v2, face.verts)
+						#if(i>138 and i<143):
+						#	print(dist_btw_verts(v3, last_mid_vert_head))
+						if(dist_btw_verts(v3, last_mid_vert_head)<0.0000000001):
+							face.edges[str(v3.index)+':'+str(root_vert.index)] = Edge(str(v3.index)+':'+str(root_vert.index), face.verts)
+							e4 = face.edges[str(v3.index)+':'+str(root_vert.index)]
+							new_face = Face(len(face.faces), (root_vert.index, v.index, v2.index, v3.index))
+							create_face(face, new_face, [edge, secnd_edge, thrd_edge, e4]) #adds new_face to face mesh and attaches the face to each edge
+							found = True
+							#print('quad')
+							break
 
-		e1.add_face(new_face)
-		e2.add_face(new_face)
-		e3.add_face(new_face)
-		e4.add_face(new_face)
+		if(len(mid_set)>2):
+			#print('multiple', len(mid_set)-1)
+			num_faces = len(mid_set)-1
+			root_vert = face.verts[new_id]
+			last_mid_vert_head = border_verts_head[mid_set[len(mid_set)-1]]
+			found = False
+
+			for edge in root_vert.edges:
+				if(found):
+					break
+				left_edge = edge
+				v = edge.retrieve_other_vert(root_vert, face.verts)
+				for secnd_edge in v.edges:
+					if(found):
+						break
+					base_edge = secnd_edge
+					v2 = secnd_edge.retrieve_other_vert(v, face.verts)
+					for thrd_edge in v2.edges:
+						right_edge = thrd_edge
+						v3 = thrd_edge.retrieve_other_vert(v2, face.verts)
+						if(dist_btw_verts(v3, last_mid_vert_head)<0.0000000001):
+							found = True
+							break
+
+			
+			last_vert = root_vert
+			l = True
+			for i in range(num_faces-1):
+				vr = border_verts[get_closest_vert(mid_set[i+1], border_verts_head, border_verts)]
+				face.props = np.append(border_verts_head[mid_set[i+1]].getLocation(), np.array((255, 255, 255, 255), dtype='float64')).tolist()
+				tmp_id = len(face.verts)
+				face.verts[tmp_id] = Vertex(tmp_id, face.props)	
+				if(dist_btw_verts(vr, v)<dist_btw_verts(vr, v2)):
+					face.edges[str(tmp_id)+':'+str(v.index)] = Edge(str(tmp_id)+':'+str(v.index), face.verts)
+					e2 = face.edges[str(tmp_id)+':'+str(v.index)]
+					face.edges[str(tmp_id)+':'+str(last_vert.index)] = Edge(str(tmp_id)+':'+str(last_vert.index), face.verts)
+					e3 = face.edges[str(tmp_id)+':'+str(last_vert.index)]
+					new_face = Face(len(face.faces), (last_vert.index, v.index, tmp_id))
+					create_face(face, new_face, [left_edge, e2, e3]) #adds new_face to face mesh and attaches the face to each edge
+					#print('tri-inside')
+					left_edge = e2
+
+				else:
+					if(l):
+						face.edges[str(tmp_id)+':'+str(v2.index)] = Edge(str(tmp_id)+':'+str(v2.index), face.verts)
+						e2 = face.edges[str(tmp_id)+':'+str(v2.index)]
+						face.edges[str(tmp_id)+':'+str(last_vert.index)] = Edge(str(tmp_id)+':'+str(last_vert.index), face.verts)
+						e3 = face.edges[str(tmp_id)+':'+str(last_vert.index)]
+						new_face = Face(len(face.faces), (last_vert.index, v.index, v2.index, tmp_id))
+						create_face(face, new_face, [left_edge, base_edge, e2, e3]) #adds new_face to face mesh and attaches the face to each edge
+						#print('quad-inside')
+						left_edge = e2
+
+						l = False
+					else:
+						face.edges[str(tmp_id)+':'+str(v2.index)] = Edge(str(tmp_id)+':'+str(v2.index), face.verts)
+						e2 = face.edges[str(tmp_id)+':'+str(v2.index)]
+						face.edges[str(tmp_id)+':'+str(last_vert.index)] = Edge(str(tmp_id)+':'+str(last_vert.index), face.verts)
+						e3 = face.edges[str(tmp_id)+':'+str(last_vert.index)]
+						new_face = Face(len(face.faces), (last_vert.index, v2.index, tmp_id))
+						create_face(face, new_face, [left_edge, e2, e3]) #adds new_face to face mesh and attaches the face to each edge
+						#print('tri-inside')
+						left_edge = e2
+
+				last_vert = face.verts[tmp_id]
+
+			#Final face
+			face.edges[str(v3.index)+':'+str(last_vert.index)] = Edge(str(v3.index)+':'+str(last_vert.index), face.verts)
+			e3 = face.edges[str(v3.index)+':'+str(last_vert.index)]
+			if(l):
+				new_face = Face(len(face.faces), (last_vert.index, v.index, v2.index, v3.index))
+				create_face(face, new_face, [left_edge, base_edge, right_edge, e3]) #adds new_face to face mesh and attaches the face to each edge
+				#print('quad-last')
+			else:
+				new_face = Face(len(face.faces), (last_vert.index, v2.index, v3.index))
+				create_face(face, new_face, [left_edge, right_edge, e3]) #adds new_face to face mesh and attaches the face to each edge
+				#print('tri-last')
 
 
 	# Write to ply
