@@ -1,5 +1,3 @@
 # 3D-Facial-Accessories
 
-Call master.py with femface.ply also in the directory.
-
-Link to download femface.ply - https://drive.google.com/open?id=1mMnbpnmiJuGNjlo_bbw1JD_IsAeDnXLV
+The paper and pipeline stages : (1) Scalismo, (2) Full_Head_Generation, (3) Accessories
