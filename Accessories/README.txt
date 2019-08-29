@@ -1,0 +1,1 @@
+This directory contains the code for alignment of accessories with 3D face-head models and their results.
