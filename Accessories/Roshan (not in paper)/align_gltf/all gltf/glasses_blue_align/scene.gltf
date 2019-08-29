@@ -1,0 +1,254 @@
+{
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5123,
+            "count" : 96456,
+            "max" : [
+                18193
+            ],
+            "min" : [
+                0
+            ],
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 18194,
+            "max" : [
+                78.85380554199219,
+                118.55247497558594,
+                -9.118379592895508
+            ],
+            "min" : [
+                -78.89928436279297,
+                -61.186405181884766,
+                -54.69660568237305
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 18194,
+            "max" : [
+                0.999969482421875,
+                0.99993896484375,
+                0.99993896484375
+            ],
+            "min" : [
+                -0.999969482421875,
+                -0.99969482421875,
+                -0.99969482421875
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 18194,
+            "max" : [
+                0.9999420642852783,
+                0.9999914765357971,
+                0.9999994039535522,
+                1.0
+            ],
+            "min" : [
+                -0.9999533295631409,
+                -0.9990631341934204,
+                -0.9998510479927063,
+                -1.0
+            ],
+            "type" : "VEC4"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5126,
+            "count" : 18194,
+            "max" : [
+                0.996999979019165,
+                0.9909629821777344
+            ],
+            "min" : [
+                0.003000000026077032,
+                0.003000020980834961
+            ],
+            "type" : "VEC2"
+        }
+    ],
+    "asset" : {
+        "generator" : "Khronos Blender glTF 2.0 exporter",
+        "version" : "2.0"
+    },
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 192912,
+            "byteOffset" : 0,
+            "target" : 34963
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 218328,
+            "byteOffset" : 192912,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 218328,
+            "byteOffset" : 411240,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 291104,
+            "byteOffset" : 629568,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 145552,
+            "byteOffset" : 920672,
+            "target" : 34962
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 1066224,
+            "uri" : "scene.bin"
+        }
+    ],
+    "images" : [
+        {
+            "name" : "images[0]",
+            "uri" : "images[0].png"
+        },
+        {
+            "name" : "images[1]",
+            "uri" : "images[1].png"
+        },
+        {
+            "name" : "images[2]",
+            "uri" : "images[2].png"
+        }
+    ],
+    "materials" : [
+        {
+            "alphaMode" : "BLEND",
+            "doubleSided" : true,
+            "name" : "Material__137.005",
+            "normalTexture" : {
+                "index" : 2
+            },
+            "occlusionTexture" : {
+                "index" : 1
+            },
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 0
+                },
+                "metallicRoughnessTexture" : {
+                    "index" : 1
+                }
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "defaultMaterial.005",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 0
+                }
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "children" : [
+                1
+            ],
+            "name" : "Collada visual scene group",
+            "rotation" : [
+                0.7071068286895752,
+                0.0,
+                -0.0,
+                0.7071067094802856
+            ],
+            "scale" : [
+                1.0,
+                0.9999998807907104,
+                0.9999998807907104
+            ]
+        },
+        {
+            "name" : "Object007"
+        },
+        {
+            "children" : [
+                3
+            ],
+            "name" : "RootNode (gltf orientation matrix)",
+            "rotation" : [
+                -0.7071068286895752,
+                0.0,
+                -0.0,
+                0.7071067094802856
+            ],
+            "scale" : [
+                1.0,
+                0.9999997615814209,
+                0.9999997615814209
+            ]
+        },
+        {
+            "children" : [
+                0
+            ],
+            "name" : "RootNode (model correction matrix)"
+        },
+        {
+            "mesh" : 0,
+            "name" : "roshan"
+        }
+    ],
+    "samplers" : [
+        {}
+    ],
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                4,
+                2
+            ]
+        }
+    ],
+    "textures" : [
+        {
+            "sampler" : 0,
+            "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
+        },
+        {
+            "sampler" : 0,
+            "source" : 2
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
+        }
+    ]
+}
